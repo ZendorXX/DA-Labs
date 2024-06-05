@@ -2,6 +2,8 @@ CFLAGS = -Wall -Wextra -pedantic
 
 main:
 	gcc $(CFLAGS) main.c -o main.out
+new:
+	g++ $(CFLAGS) new.cpp -o new.out
 
-patricia:
-	gcc $(CFLAGS) patricia.c -o patricia.out
+tmp:
+	g++ $(CFLAGS) tmp.cpp -o tmp.out
