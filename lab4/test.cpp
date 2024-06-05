@@ -94,21 +94,28 @@ int main() {
     std::cin.tie(0);
     std::cout.tie(0);
 
+    std::random_device dev;
+    std::mt19937 rng(dev());
+    std::uniform_int_distribution<std::mt19937::result_type> dist(0,1e9);
+
     std::string input;
     std::getline(std::cin, input);
 
+    size_t N = 5;
+
     std::vector<wordData> pattern;
-    std::vector<std::string> words = split(input, " ", true);
-    for (size_t wordNumber = 0; wordNumber < words.size(); ++wordNumber) {
-        pattern.push_back({words[wordNumber], 0, wordNumber + 1});
+    //std::vector<std::string> words = split(input, " ", true);
+    for (size_t wordNumber = 0; wordNumber < N; ++wordNumber) {
+        pattern.push_back({"aba", 0, wordNumber + 1});
     }
 
     std::vector<wordData> text;
 
+    size_t M = 10;
     for (size_t lineNumber = 0; std::getline(std::cin, input); ++lineNumber) {
-        std::vector<std::string> words = split(input, " ", true);
-        for (size_t wordNumber = 0; wordNumber < words.size(); ++wordNumber) {
-            text.push_back({words[wordNumber], lineNumber + 1, wordNumber + 1});
+        //std::vector<std::string> words = split(input, " ", true);
+        for (size_t wordNumber = 0; wordNumber < M; ++wordNumber) {
+            text.push_back({"aba", lineNumber + 1, wordNumber + 1});
         }
     }
 
@@ -121,7 +128,9 @@ int main() {
         allData.push_back(text[i]);
     }
 
+    auto begin_1 = std::chrono::steady_clock::now();
     std::vector<size_t> z = z_function(allData);
+    auto end_1 = std::chrono::steady_clock::now();
 
     /*for (size_t i = 0; i < z.size(); ++i) {
         size_t j = i + pattern.size() + 1;
@@ -130,7 +139,9 @@ int main() {
         } 
     }*/
 
+    auto begin_2 = std::chrono::steady_clock::now();
     std::vector<size_t> slow_z = slow_z_function(allData);
+    auto end_2 = std::chrono::steady_clock::now();
 
     return 0;
 }
