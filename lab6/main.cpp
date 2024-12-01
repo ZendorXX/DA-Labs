@@ -140,6 +140,38 @@ BigInt BigInt::operator*(BigInt& other) {
 }
 
 BigInt BigInt::operator^(BigInt& other) {
+    BigInt result("1");
+    BigInt exp = other;
+
+    /*while (exp > BigInt("0")) {
+
+    }*/
+}
+
+BigInt BigInt::operator/(BigInt &other) {
+    /*BigInt result, current;
+    result.digits.resize(digits.size());
+
+    for (int i = digits.size() - 1; i >= 0; --i) {
+        current.digits.insert(current.digits.begin(), digits[i]);
+
+        int x = 0, left = 0, right = BLOCK_BASE;
+        while (left <= right) {
+            int mid = (left + right) / 2;
+            BigInt t = other * BigInt(mid);
+            if (t <= current) {
+                x = mid;
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+
+        result.digits[i] = x;
+        current = current - other * BigInt(x);
+    }
+
+    return result;*/
 }
 
 bool BigInt::operator<(BigInt& other) {
