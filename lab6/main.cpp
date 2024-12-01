@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <iomanip>
 
 class BigInt {
 private:
@@ -9,6 +10,9 @@ private:
 
     std::vector<int> digits;
 
+    void RemoveLeadingZeros();
+    void ReverseDigits();
+
 public:
     BigInt();
     BigInt(const size_t& size);
@@ -16,10 +20,6 @@ public:
 
     BigInt(const BigInt& other);
     BigInt(BigInt&& other) noexcept;
-
-    void RemoveLeadingZeros();
-    void ReverseDigits();
-    size_t Size();
 
     BigInt operator+(const BigInt& other) const;
     BigInt operator-(const BigInt& other) const;
@@ -30,11 +30,11 @@ public:
     BigInt& operator=(const BigInt& other);
     BigInt& operator=(BigInt&& other) noexcept;
 
-    bool operator<(BigInt& other);
-    bool operator>(BigInt& other);
-    bool operator==(BigInt& other);
-    bool operator<=(BigInt& other);
-    bool operator>=(BigInt& other);
+    bool operator<(const BigInt& other) const;
+    bool operator>(const BigInt& other) const;
+    bool operator==(const BigInt& other) const;
+    bool operator<=(const BigInt& other) const;
+    bool operator>=(const BigInt& other) const;
 
     friend std::ostream& operator<< (std::ostream& os, const BigInt& number);
     friend std::istream& operator>> (std::istream& is, BigInt& number);
@@ -81,11 +81,6 @@ void BigInt::ReverseDigits() {
     std::reverse(digits.begin(), digits.end());
 }
 
-
-size_t BigInt::Size() {
-    return digits.size();
-}
-
 BigInt BigInt::operator+(const BigInt& other) const {
     size_t max_size = digits.size() > other.digits.size() ? digits.size() : other.digits.size();
     BigInt result(max_size);
@@ -102,7 +97,7 @@ BigInt BigInt::operator+(const BigInt& other) const {
             ++sum;
         }
 
-        if (sum > BigInt::MAX_DIGIT) {
+        if (sum >= BigInt::MAX_DIGIT) {
             sum -= BigInt::MAX_DIGIT;
             flag = true;
         }
@@ -117,6 +112,7 @@ BigInt BigInt::operator+(const BigInt& other) const {
         result.digits.push_back(1);
     }
 
+    result.RemoveLeadingZeros();
     return result;
 }
 
@@ -151,6 +147,7 @@ BigInt BigInt::operator-(const BigInt& other) const {
         --result.digits.back();
     }
 
+    result.RemoveLeadingZeros();
     return result;
 }
 
@@ -163,57 +160,66 @@ BigInt BigInt::operator*(const BigInt& other) const {
         }
     }
 
-    for (size_t i = 0; i < result.Size() - 1; ++i) {
+    for (size_t i = 0; i < result.digits.size() - 1; ++i) {
         result.digits[i + 1] += result.digits[i] / BigInt::MAX_DIGIT;
         result.digits[i] %= BigInt::MAX_DIGIT;
     }
 
+    result.RemoveLeadingZeros();
     return result;
 }
 
 BigInt BigInt::operator^(const BigInt& other) const {
     BigInt result("1");
+    BigInt base = *this;
     BigInt exp = other;
 
-    /*while (exp > BigInt("0")) {
+    while (exp > BigInt("0")) {
+        if ((exp.digits[0] % 2) == 1) {
+            result = result * base;
+        }
+        base = base * base;
+        exp = exp / BigInt("2");
+    }
 
-    }*/
+    result.RemoveLeadingZeros();
+    return result;
 }
 
 BigInt BigInt::operator/(const BigInt &other) const {
     BigInt dividend = *this;
-    BigInt divisor = other;   
-    BigInt result(dividend.digits.size());  
-    BigInt current;           
+    BigInt divisor = other;
+    BigInt result(dividend.digits.size());
+    BigInt current;
 
-
-    for (int i = dividend.Size() - 1; i >= 0; --i) {
-        current.digits.insert(current.digits.begin(), dividend.digits[i]);
+    for (size_t i = dividend.digits.size(); i > 0; --i) {
+        current.digits.insert(current.digits.begin(), dividend.digits[i - 1]);
         current.RemoveLeadingZeros();
 
-        int k = 0, left = 0, right = MAX_DIGIT - 1;
-        while (left <= right) {
-            int mid = (left + right) / 2;
+        int low = 0, high = BigInt::MAX_DIGIT - 1;
+        int quotient = 0;
+        while (low <= high) {
+            int mid = (low + high) / 2;
             BigInt product = divisor * BigInt(std::to_string(mid));
             if (product <= current) {
-                k = mid;
-                left = mid + 1;
+                quotient = mid;
+                low = mid + 1;
             } else {
-                right = mid - 1;
+                high = mid - 1;
             }
         }
 
-        result.digits[i] = k;
+        current = current - (divisor * BigInt(std::to_string(quotient)));
 
-        current = current - (divisor * BigInt(std::to_string(k)));
+        result.digits[i - 1] = quotient;
     }
 
-    result.RemoveLeadingZeros();  
+    result.RemoveLeadingZeros();
     return result;
 }
 
 
-bool BigInt::operator<(BigInt& other) {
+bool BigInt::operator<(const BigInt& other) const{
     if (digits.size() != other.digits.size()) {
         return digits.size() < other.digits.size();
     }
@@ -227,7 +233,7 @@ bool BigInt::operator<(BigInt& other) {
     return false;
 }
 
-bool BigInt::operator>(BigInt& other) {
+bool BigInt::operator>(const BigInt& other) const{
     if (digits.size() != other.digits.size()) {
         return digits.size() > other.digits.size();
     }
@@ -238,11 +244,10 @@ bool BigInt::operator>(BigInt& other) {
         }
     }
 
-
     return false;
 }
 
-bool BigInt::operator==(BigInt& other) {
+bool BigInt::operator==(const BigInt& other) const{
     if (digits.size() != other.digits.size()) {
         return false;
     }
@@ -256,20 +261,34 @@ bool BigInt::operator==(BigInt& other) {
     return true;
 }
 
-bool BigInt::operator<=(BigInt& other) {
+bool BigInt::operator<=(const BigInt& other) const{
     return !(*this > other);
 }
 
-bool BigInt::operator>=(BigInt& other) {
+bool BigInt::operator>=(const BigInt& other) const{
     return !(*this < other);
 }
 
 std::ostream& operator<< (std::ostream& os, const BigInt& number) {
-    for (size_t i = 0; i < number.digits.size(); ++i) {
-        os << number.digits[i];
+    BigInt copy = number;
+    //copy.RemoveLeadingZeros();
+    for (size_t i = copy.digits.size(); i > 0; --i) {
+        os << copy.digits[i - 1];
     }
 
     return os;
+    /*if (number.digits.empty()) {
+        os << 0;
+        return os;
+    }
+
+    os << number.digits.back(); 
+
+    for (size_t i = number.digits.size() - 1; i > 0; --i) {
+        os << std::setw(BigInt::DIGIT_LENGH) << std::setfill('0') << number.digits[i - 1];
+    }
+
+    return os;*/
 }
 
 std::istream& operator>> (std::istream& is, BigInt& number) {
@@ -277,6 +296,7 @@ std::istream& operator>> (std::istream& is, BigInt& number) {
     is >> input;
     
     number = BigInt(input);
+    number.RemoveLeadingZeros();
 
     return is;
 }
@@ -293,31 +313,27 @@ int main() {
     
         if      (operation == '+') {
                 BigInt res = number1 + number2;
-                res.ReverseDigits();
                 std::cout << res << '\n';
         }
         else if (operation == '-') {
             if (number1 < number2) {std::cout << "Error\n";}
             else {
                 BigInt res = number1 - number2;
-                res.ReverseDigits();
                 std::cout << res << '\n';
             }
         }
         else if (operation == '*') {
                 BigInt res = number1 * number2;
-                res.ReverseDigits();
                 std::cout << res << '\n';
         }
-        /*else if (operation == '^') {   
+        else if (operation == '^') {   
             if (number1 == BigInt("0") and number2 == BigInt("0")) {std::cout << "Error\n";}
             else{std::cout << (number1 ^ number2) << '\n';}
-        }*/
+        }
         else if (operation == '/') {
             if (number2 == BigInt("0")) {std::cout << "Error\n";}
             else {
                 BigInt res = number1 / number2;
-                res.ReverseDigits();
                 std::cout << res << '\n';
             }
         }
