@@ -2,6 +2,7 @@
 #include <vector>
 #include <algorithm>
 #include <iomanip>
+#include <numeric>
 
 class BigInt {
 private:
@@ -11,15 +12,11 @@ private:
     std::vector<int> digits;
 
     void RemoveLeadingZeros();
-    void ReverseDigits();
 
 public:
     BigInt();
     BigInt(const size_t& size);
     BigInt(const std::string& str);
-
-    BigInt(const BigInt& other);
-    BigInt(BigInt&& other) noexcept;
 
     BigInt operator+(const BigInt& other) const;
     BigInt operator-(const BigInt& other) const;
@@ -27,9 +24,6 @@ public:
     BigInt operator^(const BigInt& other) const;
     BigInt operator/(const BigInt& other) const;
     
-    BigInt& operator=(const BigInt& other);
-    BigInt& operator=(BigInt&& other) noexcept;
-
     bool operator<(const BigInt& other) const;
     bool operator>(const BigInt& other) const;
     bool operator==(const BigInt& other) const;
@@ -51,65 +45,27 @@ BigInt::BigInt(const std::string& str) {
     }
 }
 
-BigInt::BigInt(const BigInt& other) : digits(other.digits) {}
-
-BigInt& BigInt::operator=(const BigInt& other) {
-    if (this == &other) {
-        return *this;
-    }
-    digits = other.digits;
-    return *this;
-}
-
-BigInt::BigInt(BigInt&& other) noexcept : digits(std::move(other.digits)) {}
-
-BigInt& BigInt::operator=(BigInt&& other) noexcept {
-    if (this == &other) {
-        return *this;
-    }
-    digits = std::move(other.digits);
-    return *this;
-}
-
 void BigInt::RemoveLeadingZeros() {
     while (digits.size() > 1 && digits.back() == 0) {
         digits.pop_back();
     }
 }
 
-void BigInt::ReverseDigits() {
-    std::reverse(digits.begin(), digits.end());
-}
-
 BigInt BigInt::operator+(const BigInt& other) const {
-    size_t max_size = digits.size() > other.digits.size() ? digits.size() : other.digits.size();
-    BigInt result(max_size);
-    int this_digit = 0, other_digit = 0;
-    bool flag = false;
+    BigInt result(std::max(digits.size(), other.digits.size()));
+    int carry = 0;
 
-    for (size_t i = 0; i < max_size; ++i) {
-        this_digit = i < digits.size() ? digits[i] : 0;
-        other_digit = i < other.digits.size() ? other.digits[i] : 0;
+    for (size_t i = 0; i < result.digits.size(); ++i) {
+        int this_digit = i < digits.size() ? digits[i] : 0;
+        int other_digit = i < other.digits.size() ? other.digits[i] : 0;
 
-        int sum = this_digit + other_digit;
-        
-        if (flag) {
-            ++sum;
-        }
-
-        if (sum >= BigInt::MAX_DIGIT) {
-            sum -= BigInt::MAX_DIGIT;
-            flag = true;
-        }
-        else {
-            flag = false;
-        }
-        result.digits[i] = sum;
+        int sum = this_digit + other_digit + carry;
+        carry = sum / MAX_DIGIT;
+        result.digits[i] = sum % MAX_DIGIT;
     }
 
-
-    if (flag) {
-        result.digits.push_back(1);
+    if (carry) {
+        result.digits.push_back(carry);
     }
 
     result.RemoveLeadingZeros();
@@ -117,34 +73,23 @@ BigInt BigInt::operator+(const BigInt& other) const {
 }
 
 BigInt BigInt::operator-(const BigInt& other) const {
-    size_t max_size = digits.size() > other.digits.size() ? digits.size() : other.digits.size();
-    BigInt result(max_size);
-    int this_digit = 0, other_digit = 0;
-    bool flag = false;
+    BigInt result(digits.size());
+    int borrow = 0;
 
-    for (size_t i = 0; i < max_size; ++i) {
-        this_digit = i < digits.size() ? digits[i] : 0;
-        other_digit = i < other.digits.size() ? other.digits[i] : 0;
+    for (size_t i = 0; i < result.digits.size(); ++i) {
+        int this_digit = digits[i];
+        int other_digit = i < other.digits.size() ? other.digits[i] : 0;
 
-        int diff = this_digit - other_digit;
-        
-        if (flag) {
-            --diff;
-        }
+        int diff = this_digit - other_digit - borrow;
 
         if (diff < 0) {
-            diff += BigInt::MAX_DIGIT;
-            flag = true;
+            diff += MAX_DIGIT;
+            borrow = 1;
         }
         else {
-            flag = false;
+            borrow = 0;
         }
         result.digits[i] = diff;
-    }
-
-
-    if (flag) {
-        --result.digits.back();
     }
 
     result.RemoveLeadingZeros();
@@ -155,18 +100,34 @@ BigInt BigInt::operator*(const BigInt& other) const {
     BigInt result(digits.size() + other.digits.size());
 
     for (size_t i = 0; i < digits.size(); ++i) {
-        for (size_t j = 0; j < other.digits.size(); ++j) {
-            result.digits[i + j] += digits[i] * other.digits[j];
-        }
-    }
+        long long carry = 0;
+        for (size_t j = 0; j < other.digits.size() || carry; ++j) {
+            long long product = result.digits[i + j] +
+                                carry +
+                                static_cast<long long>(digits[i]) * (j < other.digits.size() ? other.digits[j] : 0);
 
-    for (size_t i = 0; i < result.digits.size() - 1; ++i) {
-        result.digits[i + 1] += result.digits[i] / BigInt::MAX_DIGIT;
-        result.digits[i] %= BigInt::MAX_DIGIT;
+            result.digits[i + j] = product % MAX_DIGIT;
+            carry = product / MAX_DIGIT;
+        }
     }
 
     result.RemoveLeadingZeros();
     return result;
+    /*BigInt result(digits.size() + other.digits.size());
+
+    for (size_t i = 0; i < digits.size(); ++i) {
+        for (size_t j = 0; j < other.digits.size(); ++j) {
+            result.digits[i + j] = result.digits[i + j] + digits[i] * other.digits[j];
+        }
+    }
+
+    for (size_t i = 0; i < result.digits.size() - 1; ++i) {
+        result.digits[i + 1] = result.digits[i + 1] + result.digits[i] / MAX_DIGIT;
+        result.digits[i] = result.digits[i] % MAX_DIGIT;
+    }
+
+    result.RemoveLeadingZeros();
+    return result;*/
 }
 
 BigInt BigInt::operator^(const BigInt& other) const {
@@ -199,7 +160,7 @@ BigInt BigInt::operator/(const BigInt &other) const {
         int low = 0, high = BigInt::MAX_DIGIT - 1;
         int quotient = 0;
         while (low <= high) {
-            int mid = (low + high) / 2;
+            int mid = std::midpoint(low, high);
             BigInt product = divisor * BigInt(std::to_string(mid));
             if (product <= current) {
                 quotient = mid;
@@ -234,31 +195,11 @@ bool BigInt::operator<(const BigInt& other) const{
 }
 
 bool BigInt::operator>(const BigInt& other) const{
-    if (digits.size() != other.digits.size()) {
-        return digits.size() > other.digits.size();
-    }
-
-    for (size_t i = digits.size(); i > 0; --i) {
-        if (digits[i - 1] != other.digits[i - 1]) {
-            return digits[i - 1] > other.digits[i - 1];
-        }
-    }
-
-    return false;
+    return other < *this;
 }
 
 bool BigInt::operator==(const BigInt& other) const{
-    if (digits.size() != other.digits.size()) {
-        return false;
-    }
-
-   for (size_t i = digits.size(); i > 0; --i) {
-        if (digits[i - 1] != other.digits[i - 1]) {
-            return false;
-        }
-    }
-
-    return true;
+    return digits == other.digits;
 }
 
 bool BigInt::operator<=(const BigInt& other) const{
@@ -270,25 +211,18 @@ bool BigInt::operator>=(const BigInt& other) const{
 }
 
 std::ostream& operator<< (std::ostream& os, const BigInt& number) {
-    BigInt copy = number;
-    //copy.RemoveLeadingZeros();
-    for (size_t i = copy.digits.size(); i > 0; --i) {
-        os << copy.digits[i - 1];
-    }
-
-    return os;
-    /*if (number.digits.empty()) {
-        os << 0;
+     if (number.digits.empty()) {
+        os << "0";
         return os;
     }
 
-    os << number.digits.back(); 
+    os << number.digits.back();
 
     for (size_t i = number.digits.size() - 1; i > 0; --i) {
         os << std::setw(BigInt::DIGIT_LENGH) << std::setfill('0') << number.digits[i - 1];
     }
 
-    return os;*/
+    return os;
 }
 
 std::istream& operator>> (std::istream& is, BigInt& number) {
