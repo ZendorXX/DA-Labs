@@ -113,21 +113,6 @@ BigInt BigInt::operator*(const BigInt& other) const {
 
     result.RemoveLeadingZeros();
     return result;
-    /*BigInt result(digits.size() + other.digits.size());
-
-    for (size_t i = 0; i < digits.size(); ++i) {
-        for (size_t j = 0; j < other.digits.size(); ++j) {
-            result.digits[i + j] = result.digits[i + j] + digits[i] * other.digits[j];
-        }
-    }
-
-    for (size_t i = 0; i < result.digits.size() - 1; ++i) {
-        result.digits[i + 1] = result.digits[i + 1] + result.digits[i] / MAX_DIGIT;
-        result.digits[i] = result.digits[i] % MAX_DIGIT;
-    }
-
-    result.RemoveLeadingZeros();
-    return result;*/
 }
 
 BigInt BigInt::operator^(const BigInt& other) const {
