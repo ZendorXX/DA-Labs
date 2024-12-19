@@ -1,93 +1,45 @@
 #include <iostream>
 #include <vector>
-#include <sstream>
 #include <string>
 #include <algorithm>
 
-using namespace std;
+std::vector<std::string> split(const std::string& s) {
+    std::vector<std::string> result;
+    std::string word;
 
-vector<string> split(const string& str) {
-    vector<string> words;
-    stringstream ss(str);
-    string word;
-    while (ss >> word) {
-        words.push_back(word);
-    }
-    return words;
-}
-
-pair<int, vector<int>> computeLCSLength(const vector<string>& seq1, const vector<string>& seq2) {
-    int n = seq1.size();
-    int m = seq2.size();
-
-    vector<int> prev(m + 1, 0), curr(m + 1, 0);
-
-    for (int i = 1; i <= n; ++i) {
-        for (int j = 1; j <= m; ++j) {
-            if (seq1[i - 1] == seq2[j - 1]) {
-                curr[j] = prev[j - 1] + 1;
-            } else {
-                curr[j] = max(prev[j], curr[j - 1]);
+    for (char ch : s) {
+        if (ch == ' ') {
+            if (!word.empty()) {
+                result.push_back(word);
+                word.clear();
             }
         }
-        prev.swap(curr);
-    }
-    return {prev[m], prev};
-}
-
-
-vector<string> restoreLCS(const vector<string>& seq1, const vector<string>& seq2) {
-    int n = seq1.size();
-    int m = seq2.size();
-
-    vector<int> prev(m + 1, 0), curr(m + 1, 0);
-    vector<string> lcs;
-
-    for (int i = 1; i <= n; ++i) {
-        for (int j = 1; j <= m; ++j) {
-            if (seq1[i - 1] == seq2[j - 1]) {
-                curr[j] = prev[j - 1] + 1;
-            } else {
-                curr[j] = max(prev[j], curr[j - 1]);
-            }
-        }
-        prev.swap(curr);
-    }
-
-    int i = n, j = m;
-    while (i > 0 && j > 0) {
-        if (seq1[i - 1] == seq2[j - 1]) {
-            lcs.push_back(seq1[i - 1]);
-            --i;
-            --j;
-        } else if (prev[j] == prev[j - 1]) {
-            --j;
-        } else {
-            --i;
+        else {
+            word += ch;
         }
     }
 
-    reverse(lcs.begin(), lcs.end());
-    return lcs;
+    if (!word.empty()) {
+        result.push_back(word);
+    }
+
+    return result;
 }
 
 int main() {
-    string line1, line2;
-    getline(cin, line1);
-    getline(cin, line2);
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(0);
+    std::cout.tie(0);
 
-    vector<string> seq1 = split(line1);
-    vector<string> seq2 = split(line2);
+    std::string s1, s2;
 
-    auto lcsLengthAndLastRow = computeLCSLength(seq1, seq2);
+    std::getline(std::cin, s1);
+    std::getline(std::cin, s2);
 
-    vector<string> lcs = restoreLCS(seq1, seq2);
+    std::vector<std::string> words1 = split(s1);
+    std::vector<std::string> words2 = split(s2);
 
-    cout << lcsLengthAndLastRow.first << endl;
-    for (const auto& word : lcs) {
-        cout << word << " ";
-    }
-    cout << endl;
+    
 
     return 0;
 }
