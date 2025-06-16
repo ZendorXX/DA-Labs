@@ -1,2 +1,13 @@
 *.out
 .vscode
+
+# Valgrind
+callgrind.out.*
+
+# gprof
+gmon.out
+
+# gcov
+*.gcno
+*.gcda
+*.info

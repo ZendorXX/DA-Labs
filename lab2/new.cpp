@@ -1,7 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include <cstdint>
-#include <string.h>
+#include <cstring>
 
 const int MAX_KEY_LENGTH =  256 + 1;
 using ull = unsigned long long;

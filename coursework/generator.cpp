@@ -45,10 +45,10 @@ void write_to_file(const std::string& filename, const std::string& s1, const std
 
 int main() {
     // Параметры генерации тестов
-    int num_words_s1 = 5000; // Количество слов в первой строке
-    int num_words_s2 = 5000; // Количество слов во второй строке
+    int num_words_s1 = 10000; // Количество слов в первой строке
+    int num_words_s2 = 10000; // Количество слов во второй строке
     int min_word_length = 1;  // Минимальная длина слова
-    int max_word_length = 10; // Максимальная длина слова
+    int max_word_length = 6; // Максимальная длина слова
 
     // Генерация случайных строк
     std::string s1 = generate_random_string(num_words_s1, min_word_length, max_word_length);

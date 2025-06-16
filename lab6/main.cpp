@@ -6,7 +6,7 @@
 
 class BigInt {
 private:
-    const static int DIGIT_LENGH = 4;
+    const static int DIGIT_LENGTH = 4;
     const static int MAX_DIGIT = 1e4;
 
     std::vector<int> digits;
@@ -39,9 +39,11 @@ BigInt::BigInt() : digits(1, 0) {};
 BigInt::BigInt(const size_t& size) : digits(size, 0) {}
 
 BigInt::BigInt(const std::string& str) {
-    for (size_t i = str.size(); i > 0; (i < DIGIT_LENGH) ? i = 0 : i -= DIGIT_LENGH) {
-        size_t length = (i < DIGIT_LENGH) ? i : DIGIT_LENGH;
-        digits.push_back(std::stoi(str.substr(i - length, length)));
+    size_t start = str.size();
+    while (start > 0) {
+        size_t len = std::min(static_cast<size_t>(DIGIT_LENGTH), start);
+        digits.push_back(std::stoi(str.substr(start - len, len)));
+        start -= len;
     }
 }
 
@@ -52,20 +54,16 @@ void BigInt::RemoveLeadingZeros() {
 }
 
 BigInt BigInt::operator+(const BigInt& other) const {
-    BigInt result(std::max(digits.size(), other.digits.size()));
+    BigInt result(std::max(digits.size(), other.digits.size()) + 1);
     int carry = 0;
 
-    for (size_t i = 0; i < result.digits.size(); ++i) {
+    for (size_t i = 0; i < result.digits.size() || carry; ++i) {
         int this_digit = i < digits.size() ? digits[i] : 0;
         int other_digit = i < other.digits.size() ? other.digits[i] : 0;
 
         int sum = this_digit + other_digit + carry;
         carry = sum / MAX_DIGIT;
         result.digits[i] = sum % MAX_DIGIT;
-    }
-
-    if (carry) {
-        result.digits.push_back(carry);
     }
 
     result.RemoveLeadingZeros();
@@ -204,7 +202,7 @@ std::ostream& operator<< (std::ostream& os, const BigInt& number) {
     os << number.digits.back();
 
     for (size_t i = number.digits.size() - 1; i > 0; --i) {
-        os << std::setw(BigInt::DIGIT_LENGH) << std::setfill('0') << number.digits[i - 1];
+        os << std::setw(BigInt::DIGIT_LENGTH) << std::setfill('0') << number.digits[i - 1];
     }
 
     return os;
